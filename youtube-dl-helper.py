@@ -53,13 +53,13 @@ Options:
     -h, --help                  Print this help text and exit
     -u, --url URL               Set url
     -o, --output FILENAME       Set output filename (without extension)
-    -kav, --keep                Keep the audio-only and video-only files
+    -k, --keep                  Keep the audio-only and video-only files
     --write-thumbnail           Write thumbnail image to disk
     --write-description         Write video description to a .description file
     --write-sub                 Write subtitle file
     -ax, --audio-ext EXT        Set extension for the audio-only file
     -vx, --video-ext EXT        Set extension for the video-only file
-    -ox, --output-ext EXT       Set extension for the output file (experimental)
+    -ox, --output-ext EXT       Set extension for the output file
     """)
     exit()
 
@@ -84,7 +84,7 @@ if len(args) >= 2:
             i += 1
             continue
 
-        if args[i] == "-kav" or args[i] == "--keep":
+        if args[i] == "-k" or args[i] == "--keep":
             deleteAV = False
             continue
 
@@ -159,9 +159,11 @@ if not optionsGiven:
 
 ffmpegFlagCVCopy = True
 if webmOrMp4Output == "webm" and webmOrMp4Video == "mp4":
-    print("WARNING: The output extension is webm and the video extension is mp4. \
+    if os.name.endswith("ix"): os.system("tput setaf 228; tput bold")
+    print("WARNING: The output extension is webm and the video extension is mp4. \n\
 The combining will be slower, because ffmpeg doesn't want \"-c:v copy\" in this situation.")
     ffmpegFlagCVCopy = False
+    if os.name.endswith("ix"): os.system("tput sgr0")
     print()
 
 print("Please wait, getting information...")
@@ -209,14 +211,26 @@ ytdlOptions = ("--write-thumbnail" if writeThumbnail else "") + (" --write-descr
 
 # Set output filename to default if not set with commandline option
 if outputFileName == "":
-    outputFileName = os.popen("youtube-dl " + url + "--get-filename -f " + ytdlFormatCodeVideo).read().split(".")
-    outputFileName = outputFileName[0..len(outputFileName) - 2]
+    outputFileName = os.popen("youtube-dl " + url + " --get-filename -f " + ytdlFormatCodeVideo).read().split(".")
+    outputFileName = "".join(outputFileName[0:len(outputFileName) - 1])
 
 print()
 print("Downloading audio...")
 os.system("youtube-dl " + url + " -f " + ytdlFormatCodeSound + " -o \"audio-" + outputFileName + "." + webmOrM4aAudio + "\" " + ytdlOptions)
-if writeDescription:    os.rename("audio-" + outputFileName + ".description", outputFileName + ".description")
-if writeThumbnail:      os.rename("audio-" + outputFileName + ".webp", outputFileName + ".webp")
+if writeDescription:
+    try:
+        os.rename("audio-" + outputFileName + ".description", outputFileName + ".description")
+    except:
+        if os.name.endswith("ix"): os.system("tput setaf 228; tput bold")
+        print("Something went wrong renaming the description.")
+        if os.name.endswith("ix"): os.system("tput sgr0")
+if writeThumbnail:
+    try:
+        os.rename("audio-" + outputFileName + ".webp", outputFileName + ".webp")
+    except:
+        if os.name.endswith("ix"): os.system("tput setaf 228; tput bold")
+        print("Something went wrong renaming the thumbnail.")
+        if os.name.endswith("ix"): os.system("tput sgr0")
 
 print()
 print("Downloading video...")
